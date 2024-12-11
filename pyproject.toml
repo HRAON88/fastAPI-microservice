@@ -1,0 +1,20 @@
+[tool.poetry]
+name = "microservice_with_tg"
+version = "0.1.0"
+description = ""
+authors = ["Denis <isayan1998@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+fastapi = "^0.115.6"
+uvicorn = "0.18.2"
+pydantic = "^2.10.3"
+pydantic-settings = "^2.6.1"
+pyrogram = "^2.0.106"
+tgcrypto = "^1.2.5"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
