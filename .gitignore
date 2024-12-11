@@ -116,4 +116,3 @@ pytest-cov-report.xml
 
 coverage-report-html/
 *.session
-.idea
