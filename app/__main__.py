@@ -1,3 +1,5 @@
+import logging
+
 from fastapi import FastAPI
 from uvicorn import run
 
@@ -27,9 +29,13 @@ def get_app() -> FastAPI:
 app = get_app()
 
 if __name__ == "__main__":
+    logging.info('парсер запускается')
     run(
         "app.__main__:app",
         reload=True,
         reload_dirs=["app"],
+        port=8002,
         log_level="debug",
+        workers=1,
     )
+    logging.info('парсер выключен')
