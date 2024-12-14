@@ -30,7 +30,6 @@ async def get_telegram():
             "my_account",
             api_id=API_ID,
             api_hash=API_HASH,
-            workdir=os.getcwd()
         )
 
         await session.start()
