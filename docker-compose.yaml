@@ -1,9 +1,10 @@
 services:
-  fastapi:
+  tg_parser:
     build:
       dockerfile: Dockerfile
     command: poetry run uvicorn __main__:app --host 0.0.0.0 --port 8002
     env_file:
       - .env
-    ports:
-      - "8002:8002"
+networks:
+  default:
+    name: tg_parser-network
