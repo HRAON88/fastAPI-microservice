@@ -1,12 +1,45 @@
 import os
-
+from dotenv import load_dotenv
 from pyrogram import Client
-
 from app.services.telegram import TgClient
+import logging
+from typing import Optional
+
+logger = logging.getLogger(__name__)
+
+# Загрузка переменных окружения
+load_dotenv()
+API_ID = int(os.getenv('API_ID'))
+API_HASH = os.getenv('API_HASH')
+
+# Глобальная переменная для хранения клиента
+_telegram_client: Optional[TgClient] = None
 
 
-async def get_telegram() -> TgClient:
-    session = Client("my_account", workdir=os.getcwd())
-    await session.start()
-    yield TgClient(session)
-    await session.stop()
+async def get_telegram():
+    """
+    Возвращает существующий клиент или создает новый, если клиент не существует
+    """
+    global _telegram_client
+
+    if _telegram_client is not None and _telegram_client.client.is_connected:
+        return _telegram_client
+
+    try:
+        session = Client(
+            "my_account",
+            api_id=API_ID,
+            api_hash=API_HASH,
+            workdir=os.getcwd()
+        )
+
+        await session.start()
+        _telegram_client = TgClient(session)
+        logger.info("Created new Telegram client session")
+        return _telegram_client
+
+    except Exception as e:
+        logger.error(f"Error during session initialization: {str(e)}")
+        if session and session.is_connected:
+            await session.stop()
+        raise
