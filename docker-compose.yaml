@@ -9,6 +9,11 @@ services:
       - ./app:/app/app
     env_file:
       - .env
+    networks:
+      tg_parser-network:
+        aliases:
+          - tg_parser
+
 networks:
-  default:
-    name: tg_parser-network
+  tg_parser-network:
+    external: true
