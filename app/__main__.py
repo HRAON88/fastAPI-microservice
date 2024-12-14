@@ -31,7 +31,7 @@ app = get_app()
 if __name__ == "__main__":
     logging.info('парсер запускается')
     run(
-        "__main__:app",
+        "app.__main__:app",
         reload=True,
         reload_dirs=["app"],
         port=8002,
