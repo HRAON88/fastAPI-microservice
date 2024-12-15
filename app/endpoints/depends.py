@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 load_dotenv()
 API_ID = int(os.getenv('API_ID'))
 API_HASH = os.getenv('API_HASH')
-
+SESSION_STRING = os.getenv('SESSION_STRING')
 # Глобальная переменная для хранения клиента
 _telegram_client: Optional[TgClient] = None
 
@@ -27,7 +27,8 @@ async def get_telegram():
 
     try:
         session = Client(
-            "my_account",
+            "my_session_for_parser",
+            session_string=SESSION_STRING,
             api_id=API_ID,
             api_hash=API_HASH,
         )
