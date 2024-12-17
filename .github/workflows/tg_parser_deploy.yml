@@ -21,9 +21,12 @@ jobs:
             # Остановка существующих контейнеров
             cd ~/fastAPI-microservice 2>/dev/null && docker compose down || true
             
-            # Очистка директории с sudo для решения проблем с правами
+            # Очистка директории с использованием find
             cd ~
-            sudo rm -rf fastAPI-microservice
+            if [ -d "fastAPI-microservice" ]; then
+              find fastAPI-microservice -type f -exec rm -f {} +
+              rm -rf fastAPI-microservice
+            fi
             
             # Клонирование репозитория
             git clone --depth 1 https://${{ secrets.GH_TOKEN }}@github.com/HRAON88/fastAPI-microservice.git
@@ -36,8 +39,8 @@ jobs:
             SESSION_STRING=${{ secrets.SESSION_STRING }}
             EOF
             
-            # Установка прав на директорию
-            sudo chown -R deploy:deploy .
+            # Установка прав на файлы
+            chmod -R u+rw .
             
             # Запуск контейнеров
             docker compose up -d --build
