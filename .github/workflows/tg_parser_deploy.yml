@@ -2,7 +2,8 @@ name: Deploy workflow
 on: 
   push:
     branches: [ main ]
-
+  repository_dispatch:
+    types: [deploy_trigger]
   workflow_dispatch:  
 
 jobs:
