@@ -2,7 +2,6 @@ name: Deploy workflow
 on: 
   push:
     branches: [ main ]
-
   workflow_dispatch:  
 
 jobs:
@@ -17,21 +16,32 @@ jobs:
           username: deploy
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
-            # Остановка существующих контейнеров
-            cd ~/fastAPI-microservice 2>/dev/null && docker-compose down || true
+            # Clean up existing deployment
+            cd ~ 
+            rm -rf fastAPI-microservice
             
-            # Очистка и клонирование с использованием токена
-            cd ~ && rm -rf fastAPI-microservice
-            git clone https://${{ secrets.GH_PAT }}@github.com/HRAON88/fastAPI-microservice.git
+            # Clone repository with token
+            git clone "https://${{ secrets.GH_PAT }}@github.com/HRAON88/fastAPI-microservice.git"
+            
+            # Verify clone was successful
+            if [ ! -d "fastAPI-microservice" ]; then
+              echo "Repository clone failed"
+              exit 1
+            fi
+            
+            # Navigate to project directory
             cd fastAPI-microservice
             
-            # Создание .env файла
+            if [ -f "docker-compose.yml" ]; then
+              sudo docker compose down
+            fi
+            
             cat > .env << EOF
             API_ID=${{ secrets.API_ID }}
             API_HASH=${{ secrets.API_HASH }}
             SESSION_STRING=${{ secrets.SESSION_STRING }}
             EOF
             
-            # Запуск контейнеров
-            docker-compose up -d --build
-            docker image prune -f
+            sudo docker compose up -d --build
+            
+            sudo docker image prune -f
