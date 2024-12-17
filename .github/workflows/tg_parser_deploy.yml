@@ -2,6 +2,7 @@ name: Deploy workflow
 on: 
   push:
     branches: [ main ]
+
   workflow_dispatch:  
 
 jobs:
@@ -16,12 +17,13 @@ jobs:
           username: deploy
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
-            # Clean up existing deployment
-            cd ~ 
-            rm -rf fastAPI-microservice
+            # Остановка существующих контейнеров
+            cd ~/fastAPI-microservice 2>/dev/null && docker-compose down || true
             
-            # Clone repository with token (исправленный формат URL)
-            git clone https://oauth2:${{ secrets.GH_PAT }}@github.com/HRAON88/fastAPI-microservice.git
+            # Очистка и клонирование с использованием токена
+            cd ~ && rm -rf fastAPI-microservice
+            git clone https://${{ secrets.GH_PAT }}@github.com/HRAON88/fastAPI-microservice.git
+            cd fastAPI-microservice
             
             # Verify clone was successful
             if [ ! -d "fastAPI-microservice" ]; then
