@@ -17,16 +17,19 @@ jobs:
           username: deploy
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
+
             cd ~/fastAPI-microservice 2>/dev/null && docker-compose down || true
+            
+
             cd ~ && rm -rf fastAPI-microservice
-            git clone --depth 1 https://github.com/HRAON88/fastAPI-microservice.git
+            git clone --depth 1 https://${{ secrets.GITHUB_TOKEN }}@github.com/HRAON88/fastAPI-microservice.git
             cd fastAPI-microservice
             
+
             cat > .env << EOF
             API_ID=${{ secrets.API_ID }}
             API_HASH=${{ secrets.API_HASH }}
             SESSION_STRING=${{ secrets.SESSION_STRING }}
-
             EOF
             
             docker-compose up -d --build
