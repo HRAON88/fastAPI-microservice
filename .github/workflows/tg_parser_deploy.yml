@@ -1,4 +1,4 @@
-name: Deploy_tg_parser workflow
+name: Deploy workflow
 on: 
   push:
     branches: [ main ]
@@ -19,16 +19,10 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
             # Остановка существующих контейнеров
-            cd ~/fastAPI-microservice 2>/dev/null && docker compose down || true
+            cd ~/fastAPI-microservice 2>/dev/null && docker compose down  true
             
-            # Очистка директории с использованием find
-            cd ~
-            if [ -d "fastAPI-microservice" ]; then
-              find fastAPI-microservice -type f -exec rm -f {} +
-              rm -rf fastAPI-microservice
-            fi
-            
-            # Клонирование репозитория
+            # Очистка и клонирование
+            cd ~ && rm -rf fastAPI-microservice
             git clone --depth 1 https://${{ secrets.GH_TOKEN }}@github.com/HRAON88/fastAPI-microservice.git
             cd fastAPI-microservice
             
@@ -39,11 +33,6 @@ jobs:
             SESSION_STRING=${{ secrets.SESSION_STRING }}
             EOF
             
-            # Установка прав на файлы
-            chmod -R u+rw .
-            
             # Запуск контейнеров
             docker compose up -d --build
-            
-            # Очистка неиспользуемых образов
             docker image prune -f
