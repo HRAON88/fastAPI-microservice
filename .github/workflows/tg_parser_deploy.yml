@@ -20,8 +20,8 @@ jobs:
             cd ~ 
             rm -rf fastAPI-microservice
             
-            # Clone repository with token
-            git clone "https://${{ secrets.GH_PAT }}@github.com/HRAON88/fastAPI-microservice.git"
+            # Clone repository with token (исправленный формат URL)
+            git clone https://oauth2:${{ secrets.GH_PAT }}@github.com/HRAON88/fastAPI-microservice.git
             
             # Verify clone was successful
             if [ ! -d "fastAPI-microservice" ]; then
@@ -32,16 +32,20 @@ jobs:
             # Navigate to project directory
             cd fastAPI-microservice
             
+            # Stop existing containers if they exist
             if [ -f "docker-compose.yml" ]; then
               sudo docker compose down
             fi
             
+            # Create .env file
             cat > .env << EOF
             API_ID=${{ secrets.API_ID }}
             API_HASH=${{ secrets.API_HASH }}
             SESSION_STRING=${{ secrets.SESSION_STRING }}
             EOF
             
+            # Start containers
             sudo docker compose up -d --build
             
+            # Clean up unused images
             sudo docker image prune -f
