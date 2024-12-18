@@ -19,7 +19,7 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
             # Остановка существующих контейнеров
-            cd ~/fastAPI-microservice 2>/dev/null && docker compose down || true
+            cd ~/fastAPI-microservice && docker compose down || true
             
             # Очистка и клонирование
             cd ~ && rm -rf fastAPI-microservice
