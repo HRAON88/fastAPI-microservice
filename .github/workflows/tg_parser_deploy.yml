@@ -22,11 +22,8 @@ jobs:
             CURRENT_UID=$(id -u)
             CURRENT_GID=$(id -g)
             
-            # Остановка существующих контейнеров
-            cd ~/fastAPI-microservice && docker compose down || true
-            
             # Очистка и клонирование
-            cd ~ && rm -rf fastAPI-microservice
+            cd ~ && rm -rf fastAPI-microservice || true
             git clone --depth 1 https://${{ secrets.GH_TOKEN }}@github.com/HRAON88/fastAPI-microservice.git
             cd fastAPI-microservice
             
@@ -39,10 +36,14 @@ jobs:
             GID=$CURRENT_GID
             EOF
             
-            # Запуск контейнеров с передачей UID и GID
-            docker compose up -d --build \
+            # Остановка существующих контейнеров
+            docker compose down || true
+            
+            # Сборка и запуск контейнеров
+            DOCKER_BUILDKIT=1 docker compose build \
               --build-arg UID=$CURRENT_UID \
               --build-arg GID=$CURRENT_GID
+            docker compose up -d
             
             # Очистка неиспользуемых образов
             docker image prune -f
