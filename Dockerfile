@@ -1,5 +1,13 @@
 FROM python:3.10-slim
 
+# Получаем UID и GID из аргументов сборки
+ARG UID=1000
+ARG GID=1000
+
+# Создаем пользователя с тем же UID/GID что и deploy пользователь
+RUN groupadd -g ${GID} appgroup && \
+    useradd -u ${UID} -g ${GID} -m appuser
+
 # Установка Poetry
 RUN pip install poetry
 
@@ -13,12 +21,15 @@ RUN poetry config virtualenvs.create false \
 # Копирование исходного кода
 COPY ./app ./app
 
-# Компиляция Python файлов
+# Компиляция Python файлов и установка правильных прав
 RUN python -m compileall ./app \
-    && find ./app -type d -name "__pycache__" -exec chmod 755 {} + \
-    && find ./app -type f -name "*.pyc" -exec chmod 644 {} + \
+    && chown -R ${UID}:${GID} /app \
+    && find ./app -type d -exec chmod 755 {} + \
+    && find ./app -type f -exec chmod 644 {} + \
     && ls -la && ls -la app/
 
-# Запуск приложения
-CMD ["poetry", "run", "uvicorn", "app.__main__:app", "--host", "0.0.0.0", "--port", "8002"]
+# Переключение на пользователя appuser
+USER appuser
 
+# Запуск приложения с правильным путем
+CMD ["poetry", "run", "uvicorn", "app.__main__:app", "--host", "0.0.0.0", "--port", "8002"]
