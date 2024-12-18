@@ -20,5 +20,5 @@ RUN python -m compileall ./app \
     && ls -la && ls -la app/
 
 # Запуск приложения
-CMD ["poetry", "run", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8002"]
+CMD ["poetry", "run", "uvicorn", "app.__main__:app", "--host", "0.0.0.0", "--port", "8002"]
 
