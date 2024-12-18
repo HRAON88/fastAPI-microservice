@@ -18,6 +18,10 @@ jobs:
           username: deploy
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
+            # Сохраняем текущий UID и GID
+            CURRENT_UID=$(id -u)
+            CURRENT_GID=$(id -g)
+            
             # Остановка существующих контейнеров
             cd ~/fastAPI-microservice && docker compose down || true
             
@@ -31,8 +35,14 @@ jobs:
             API_ID=${{ secrets.API_ID }}
             API_HASH=${{ secrets.API_HASH }}
             SESSION_STRING=${{ secrets.SESSION_STRING }}
+            UID=$CURRENT_UID
+            GID=$CURRENT_GID
             EOF
             
-            # Запуск контейнеров
-            docker compose up -d --build
+            # Запуск контейнеров с передачей UID и GID
+            docker compose up -d --build \
+              --build-arg UID=$CURRENT_UID \
+              --build-arg GID=$CURRENT_GID
+            
+            # Очистка неиспользуемых образов
             docker image prune -f
