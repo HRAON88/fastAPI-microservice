@@ -22,10 +22,20 @@ jobs:
             CURRENT_UID=$(id -u)
             CURRENT_GID=$(id -g)
             
-            # Очистка и клонирование
-            cd ~ && rm -rf fastAPI-microservice || true
-            git clone --depth 1 https://${{ secrets.GH_TOKEN }}@github.com/HRAON88/fastAPI-microservice.git
-            cd fastAPI-microservice
+            # Проверяем существование директории
+            if [ -d "~/fastAPI-microservice" ]; then
+                echo "Directory exists, performing update"
+                cd ~/fastAPI-microservice
+                # Останавливаем контейнеры
+                docker compose down || true
+                # Обновляем репозиторий
+                git pull
+            else
+                echo "Directory does not exist, performing clone"
+                # Клонирование репозитория
+                git clone --depth 1 https://${{ secrets.GH_TOKEN }}@github.com/HRAON88/fastAPI-microservice.git
+                cd fastAPI-microservice
+            fi
             
             # Создание .env файла
             cat > .env << EOF
@@ -35,9 +45,6 @@ jobs:
             UID=$CURRENT_UID
             GID=$CURRENT_GID
             EOF
-            
-            # Остановка существующих контейнеров
-            docker compose down || true
             
             # Сборка и запуск контейнеров
             DOCKER_BUILDKIT=1 docker compose build \
