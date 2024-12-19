@@ -9,7 +9,6 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    
     steps:
       - name: Deploy to server
         uses: appleboy/ssh-action@master
@@ -18,38 +17,36 @@ jobs:
           username: deploy
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
-            # Сохраняем текущий UID и GID
-            CURRENT_UID=$(id -u)
-            CURRENT_GID=$(id -g)
+            # Заходим в домашнюю директорию
+            cd /home/deploy/
             
-            # Проверяем существование директории
-            if [ -d "~/fastAPI-microservice" ]; then
-                echo "Directory exists, performing update"
-                cd ~/fastAPI-microservice
+            # Проверяем наличие папки fastAPI-microservice
+            if [ -d "fastAPI-microservice" ]; then
+                # Если папка есть
+                cd fastAPI-microservice
                 # Останавливаем контейнеры
-                docker compose down || true
-                # Обновляем репозиторий
+                docker compose down
+                # Git pull
                 git pull
             else
-                echo "Directory does not exist, performing clone"
-                # Клонирование репозитория
-                git clone --depth 1 https://${{ secrets.GH_TOKEN }}@github.com/HRAON88/fastAPI-microservice.git
+                # Если папки нет
+                git clone https://${{ secrets.GH_TOKEN }}@github.com/HRAON88/fastAPI-microservice.git
                 cd fastAPI-microservice
             fi
             
-            # Создание .env файла
-            cat > .env << EOF
+            # Создание env файла
+            cat > .env << 'EOF'
             API_ID=${{ secrets.API_ID }}
             API_HASH=${{ secrets.API_HASH }}
             SESSION_STRING=${{ secrets.SESSION_STRING }}
-            UID=$CURRENT_UID
-            GID=$CURRENT_GID
+            UID=$(id -u)
+            GID=$(id -g)
             EOF
             
             # Сборка и запуск контейнеров
             DOCKER_BUILDKIT=1 docker compose build \
-              --build-arg UID=$CURRENT_UID \
-              --build-arg GID=$CURRENT_GID
+              --build-arg UID=$(id -u) \
+              --build-arg GID=$(id -g)
             docker compose up -d
             
             # Очистка неиспользуемых образов
