@@ -1,0 +1,53 @@
+name: Deploy workflow
+on: 
+  push:
+    branches: [ main ]
+  repository_dispatch:
+    types: [deploy_trigger]
+  workflow_dispatch:  
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to server
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: deploy
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            # Заходим в домашнюю директорию
+            cd /home/deploy/
+            
+            # Проверяем наличие папки fastAPI-microservice
+            if [ -d "fastAPI-microservice" ]; then
+                # Если папка есть
+                cd fastAPI-microservice
+                # Останавливаем контейнеры
+                docker compose down
+                # Git pull
+                git pull
+            else
+                # Если папки нет
+                git clone https://${{ secrets.GH_TOKEN }}@github.com/HRAON88/fastAPI-microservice.git
+                cd fastAPI-microservice
+            fi
+            
+            # Создание env файла
+            cat > .env << 'EOF'
+            API_ID=${{ secrets.API_ID }}
+            API_HASH=${{ secrets.API_HASH }}
+            SESSION_STRING=${{ secrets.SESSION_STRING }}
+            UID=$(id -u)
+            GID=$(id -g)
+            EOF
+            
+            # Сборка и запуск контейнеров
+            DOCKER_BUILDKIT=1 docker compose build \
+              --build-arg UID=$(id -u) \
+              --build-arg GID=$(id -g)
+            docker compose up -d
+            
+            # Очистка неиспользуемых образов
+            docker image prune -f
