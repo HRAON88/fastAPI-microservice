@@ -12,38 +12,48 @@ class TgClient:
         self.client = client
 
     async def parsing(self, limit: int, channel_ids: List[int]) -> Dict[str, Any]:
-        """
-        Парсит сообщения из указанных каналов
-        """
         try:
             data = {}
             total_processed = 0
+            posts_processed = 0
 
             for channel_id in channel_ids:
                 try:
                     logger.info(f"Начало парсинга канала {channel_id}")
 
-                    # Проверяем доступ к каналу
                     try:
                         await self.client.get_chat(channel_id)
                     except Exception as e:
                         logger.error(f"Не удалось получить доступ к каналу {channel_id}: {str(e)}")
                         continue
 
-                    async for message in self.client.get_chat_history(channel_id, limit=limit):
+                    async for message in self.client.get_chat_history(channel_id):
+                        if posts_processed >= limit:
+                            break
+
                         try:
                             resp = await self.create_news_from_tg_message(message)
                             if not resp:
                                 continue
 
                             text = resp["text"]
+                            created_at = resp["created_at"]
+
                             if text in data:
                                 # Если текст уже существует, выбираем набор фото с большим количеством
-                                data[text] = max(resp["photos"], data[text], key=len)
+                                if len(resp["photos"]) > len(data[text]["photos"]):
+                                    data[text] = {
+                                        "photos": resp["photos"],
+                                        "created_at": created_at
+                                    }
                             else:
-                                data[text] = resp["photos"]
+                                data[text] = {
+                                    "photos": resp["photos"],
+                                    "created_at": created_at
+                                }
 
                             total_processed += 1
+                            posts_processed += 1
 
                         except Exception as msg_error:
                             logger.error(f"Ошибка при обработке сообщения: {str(msg_error)}")
@@ -57,7 +67,12 @@ class TgClient:
 
             return {
                 "count": len(data),
-                "data": data,
+                "data": {
+                    text: {
+                        "photos": item["photos"],
+                        "created_at": item["created_at"]
+                    } for text, item in data.items()
+                }
             }
 
         except Exception as e:
@@ -107,7 +122,6 @@ class TgClient:
                     photos.append(photo_data)
 
                 except Exception as photo_error:
-                    logger.error(f"Ошибка при обработке фото: {str(photo_error)}")
                     continue
 
             if not photos:
@@ -115,7 +129,8 @@ class TgClient:
 
             return {
                 "text": text,
-                "photos": photos
+                "photos": photos,
+                "created_at": message.date.timestamp()
             }
 
         except Exception as e:
