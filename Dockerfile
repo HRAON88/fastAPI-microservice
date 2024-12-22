@@ -4,11 +4,11 @@ FROM python:3.10-slim
 ARG UID=1000
 ARG GID=1000
 
-# Создаем пользователя с тем же UID/GID что и deploy пользователь
+
 RUN groupadd -g ${GID} appgroup && \
     useradd -u ${UID} -g ${GID} -m appuser
 
-# Установка Poetry
+
 RUN pip install poetry
 
 WORKDIR /app
