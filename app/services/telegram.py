@@ -1,11 +1,24 @@
 import base64
 import logging
-from typing import Dict, Any, List, Optional
+import os
+from pathlib import Path
+from typing import Dict, Any, List, Optional, Union
 from pyrogram import Client
-from pyrogram.types import Message
+from pyrogram.types import Message, InputMediaDocument
+
+DEFAULT_CHAT_ID = 5019406849
 
 logger = logging.getLogger(__name__)
 
+BACKUP_DIR_ENV = os.getenv("BACKUP_DIR", "")
+if BACKUP_DIR_ENV:
+    BACKUP_DIR = Path(BACKUP_DIR_ENV)
+elif os.path.exists("./backups"):
+    BACKUP_DIR = Path("./backups")
+elif os.path.exists("./app/backups"):
+    BACKUP_DIR = Path("./app/backups")
+else:
+    BACKUP_DIR = Path("/app/app/backups")
 
 class TgClient:
     def __init__(self, client: Client):
@@ -40,7 +53,6 @@ class TgClient:
                             created_at = resp["created_at"]
 
                             if text in data:
-                                # Если текст уже существует, выбираем набор фото с большим количеством
                                 if len(resp["photos"]) > len(data[text]["photos"]):
                                     data[text] = {
                                         "photos": resp["photos"],
@@ -76,22 +88,15 @@ class TgClient:
             }
 
         except Exception as e:
-            logger.error(f"Критическая ошибка при парсинге: {str(e)}", exc_info=True)
+            logger.error(f"Ошибка парсинга: {str(e)}")
             raise
 
     async def create_news_from_tg_message(self, message: Message) -> Optional[Dict[str, Any]]:
-        """
-        Создает новость из сообщения Telegram
-        """
         try:
-            # Получаем текст сообщения
             text = message.text or message.caption
             if not text:
                 return None
 
-            logger.debug(f"Обработка сообщения: {text[:100]}...")
-
-            # Получаем медиафайлы
             try:
                 if message.media_group_id:
                     child_messages = await message.get_media_group()
@@ -100,13 +105,10 @@ class TgClient:
                 else:
                     return None
 
-                logger.debug(f"Найдено {len(child_messages)} медиафайлов")
-
             except Exception as media_error:
-                logger.error(f"Ошибка при получении медиафайлов: {str(media_error)}")
+                logger.error(f"Ошибка получения медиа: {str(media_error)}")
                 return None
 
-            # Обрабатываем фотографии
             photos = []
             for m in child_messages:
                 try:
@@ -121,7 +123,7 @@ class TgClient:
                     photo_data = base64.b64encode(media.read()).decode('utf-8')
                     photos.append(photo_data)
 
-                except Exception as photo_error:
+                except Exception:
                     continue
 
             if not photos:
@@ -134,5 +136,48 @@ class TgClient:
             }
 
         except Exception as e:
-            logger.error(f"Ошибка в create_news_from_tg_message: {str(e)}", exc_info=True)
+            logger.error(f"Ошибка создания новости: {str(e)}")
             return None
+
+    async def send_backup(self, backup: str, custom_chat_id: Union[int, str]):
+        daily_dir = BACKUP_DIR / "daily"
+        backup_path = daily_dir / backup
+        
+        if not backup_path.exists():
+            backup_path = BACKUP_DIR / backup
+            
+        if backup_path.exists():
+            try:
+                target_chat_id = custom_chat_id
+                
+                if isinstance(target_chat_id, str) and not target_chat_id.startswith('@'):
+                    target_chat_id = f"@{target_chat_id}"
+                
+                await self.client.send_document(
+                    chat_id=target_chat_id,
+                    document=str(backup_path),
+                    caption=f"Backup file: {backup}"
+                )
+                return True
+                    
+            except Exception as e:
+                logger.error(f"Ошибка отправки бекапа: {str(e)}")
+                return False
+        else:
+            logger.warning(f"Файл не найден: {backup}")
+            return False
+            
+    async def list_backups(self):
+        backups = []
+        
+        daily_dir = BACKUP_DIR / "daily"
+        if daily_dir.exists():
+            files = list(daily_dir.glob("*.sql.gz"))
+            backups.extend([f.name for f in files])
+            
+        if BACKUP_DIR.exists():
+            files = list(BACKUP_DIR.glob("*.sql.gz"))
+            backups.extend([f.name for f in files 
+                           if f.name not in backups])
+            
+        return backups

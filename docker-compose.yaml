@@ -10,6 +10,7 @@ services:
       - "8002:8002"
     volumes:
       - ./app:/app/app
+      - /home/deploy/vityaz_site/backups:/app/backups
     env_file:
       - .env
     networks:

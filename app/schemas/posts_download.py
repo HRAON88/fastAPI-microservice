@@ -10,3 +10,14 @@ class PostDownload(BaseModel):
 class TgNewsRequest(BaseModel):
     limit: int
     chat_ids: list[int]
+
+class BackupRequest(BaseModel):
+    filename: str
+    chat_id: Union[int, str]
+
+class BackupResponse(BaseModel):
+    success: bool
+    message: str
+
+class ListBackupsResponse(BaseModel):
+    backups: list[str]
