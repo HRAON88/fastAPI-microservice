@@ -1,5 +1,5 @@
 import logging
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 from fastapi import APIRouter, Depends, HTTPException
 from app.endpoints.depends import get_telegram
 from app.schemas.posts_download import PostDownload, TgNewsRequest, BackupRequest, BackupResponse, ListBackupsResponse
@@ -45,7 +45,8 @@ async def send_backup(
     try:
         success = await telegram.send_backup(
             backup=model.filename,
-            custom_chat_id=model.chat_id
+            custom_chat_id=model.chat_id,
+            folder=model.folder
         )
         
         if success:
@@ -68,13 +69,15 @@ async def send_backup(
         
 @router.get("/backup/list", response_model=ListBackupsResponse)
 async def list_backups(
+        folder: Optional[str] = None,
         telegram: TgClient = Depends(get_telegram)
 ):
     try:
-        backups = await telegram.list_backups()
+        backups = await telegram.list_backups(folder=folder)
         
         return {
-            "backups": backups
+            "backups": backups,
+            "folder": folder
         }
     
     except Exception as e:

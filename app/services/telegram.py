@@ -139,12 +139,15 @@ class TgClient:
             logger.error(f"Ошибка создания новости: {str(e)}")
             return None
 
-    async def send_backup(self, backup: str, custom_chat_id: Union[int, str]):
-        daily_dir = BACKUP_DIR / "daily"
-        backup_path = daily_dir / backup
-        
-        if not backup_path.exists():
-            backup_path = BACKUP_DIR / backup
+    async def send_backup(self, backup: str, custom_chat_id: Union[int, str], folder: Optional[str] = None):
+        if folder:
+            backup_path = BACKUP_DIR / folder / backup
+        else:
+            daily_dir = BACKUP_DIR / "daily"
+            backup_path = daily_dir / backup
+            
+            if not backup_path.exists():
+                backup_path = BACKUP_DIR / backup
             
         if backup_path.exists():
             try:
@@ -171,17 +174,22 @@ class TgClient:
             logger.warning(f"Файл не найден: {backup}")
             return False
             
-    async def list_backups(self):
+    async def list_backups(self, folder: Optional[str] = None):
         backups = []
         
-        daily_dir = BACKUP_DIR / "daily"
-        if daily_dir.exists():
-            files = list(daily_dir.glob("*.sql.gz"))
-            backups.extend([f.name for f in files])
-            
-        if BACKUP_DIR.exists():
-            files = list(BACKUP_DIR.glob("*.sql.gz"))
-            backups.extend([f.name for f in files 
-                           if f.name not in backups])
-            
+        if folder:
+            target_dir = BACKUP_DIR / folder
+            if target_dir.exists():
+                files = list(target_dir.glob("*.sql.gz"))
+                backups.extend([f.name for f in files])
+        else:
+            # Если папка не указана, используем папку last и файл postgres-latest.sql.gz
+            target_file = BACKUP_DIR / "last" / "postgres-latest.sql.gz"
+            if target_file.exists():
+                backups.append("postgres-latest.sql.gz")
+            else:
+                # Если файл не найден, ищем в корневой директории бэкапов
+                files = list(BACKUP_DIR.glob("**/*.sql.gz"))
+                backups.extend([f.name for f in files])
+        
         return backups

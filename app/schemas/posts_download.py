@@ -1,4 +1,4 @@
-from typing import Union
+from typing import Union, Optional
 
 from pydantic import BaseModel
 
@@ -14,6 +14,7 @@ class TgNewsRequest(BaseModel):
 class BackupRequest(BaseModel):
     filename: str
     chat_id: Union[int, str]
+    folder: Optional[str] = None
 
 class BackupResponse(BaseModel):
     success: bool
@@ -21,3 +22,4 @@ class BackupResponse(BaseModel):
 
 class ListBackupsResponse(BaseModel):
     backups: list[str]
+    folder: Optional[str] = None
