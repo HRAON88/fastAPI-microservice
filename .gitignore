@@ -116,3 +116,4 @@ pytest-cov-report.xml
 
 coverage-report-html/
 *.session
+/app/backups/
