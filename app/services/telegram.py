@@ -159,7 +159,6 @@ class TgClient:
                     if isinstance(target_chat_id, str) and not target_chat_id.startswith('@'):
                         target_chat_id = f"@{target_chat_id}"
 
-                print(target_chat_id)
                 await self.client.send_document(
                     chat_id=target_chat_id,
                     document=str(backup_path),
