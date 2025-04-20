@@ -24,10 +24,11 @@ jobs:
             if [ -d "fastAPI-microservice" ]; then
                 # Если папка есть
                 cd fastAPI-microservice
-                # Останавливаем контейнеры
+            
                 docker compose down
-                # Git pull
-                git pull
+
+                rm -f .env
+                git pull  https://${{ secrets.GH_TOKEN }}@github.com/HRAON88/fastAPI-microservice.git
             else
                 # Если папки нет
                 git clone https://${{ secrets.GH_TOKEN }}@github.com/HRAON88/fastAPI-microservice.git
@@ -43,11 +44,14 @@ jobs:
             GID=$(id -g)
             EOF
             
-            # Сборка и запуск контейнеров
+            if [ ! -f ".env" ]; then
+            echo "Error: .env file was not created!"
+            exit 1
+            fi  
+            
             DOCKER_BUILDKIT=1 docker compose build \
               --build-arg UID=$(id -u) \
               --build-arg GID=$(id -g)
             docker compose up -d
             
-            # Очистка неиспользуемых образов
-            docker image prune -f
+            
