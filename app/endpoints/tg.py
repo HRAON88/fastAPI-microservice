@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from app.endpoints.depends import get_telegram
 from app.schemas.posts_download import PostDownload, TgNewsRequest, BackupRequest, BackupResponse, ListBackupsResponse
 from app.services.telegram import TgClient
+from pydantic import BaseModel
 
 router = APIRouter()
 
@@ -14,6 +15,12 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+class MediaArchiveRequest(BaseModel):
+    chat_id: str
+
+class MediaArchiveResponse(BaseModel):
+    success: bool
+    message: str
 
 @router.post("/tg_news", response_model=PostDownload)
 async def tg_check(
@@ -79,6 +86,34 @@ async def list_backups(
             "backups": backups,
             "folder": folder
         }
+    
+    except Exception as e:
+        logger.error(f"Error: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=str(e)
+        )
+
+@router.post("/media/archive", response_model=MediaArchiveResponse)
+async def send_media_archive(
+        model: MediaArchiveRequest,
+        telegram: TgClient = Depends(get_telegram)
+):
+    try:
+        success = await telegram.send_media_archive(
+            custom_chat_id=model.chat_id
+        )
+        
+        if success:
+            return {
+                "success": True,
+                "message": "Media archive sent successfully"
+            }
+        else:
+            return {
+                "success": False,
+                "message": "Failed to create and send media archive"
+            }
     
     except Exception as e:
         logger.error(f"Error: {str(e)}")
