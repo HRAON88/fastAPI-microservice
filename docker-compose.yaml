@@ -2,6 +2,9 @@ services:
   tg_parser:
     build:
       context: .
+      args:
+        - UID=${UID:-1000}
+        - GID=${GID:-1000}
       dockerfile: Dockerfile
     ports:
       - "8002:8002"
