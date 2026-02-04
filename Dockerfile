@@ -3,7 +3,7 @@ RUN pip install poetry
 
 WORKDIR /app
 
-RUN poerty install --no-root
+RUN poetry install --no-root
 
 # Копирование исходного кода
 COPY ./app ./app
