@@ -3,9 +3,7 @@ RUN pip install poetry
 
 WORKDIR /app
 
-COPY pyproject.toml poetry.lock ./
-RUN poetry config virtualenvs.create false \
-    && poetry install
+RUN poerty install --no-root
 
 # Копирование исходного кода
 COPY ./app ./app
